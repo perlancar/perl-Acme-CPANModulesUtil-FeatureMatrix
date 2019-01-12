@@ -31,12 +31,19 @@ sub draw_feature_matrix {
 
     my %args = @_;
 
-    my $mod = $args{cpanmodule} or return [400, "Please specify cpanmodule"];
-    $mod = "Acme::CPANModules::$mod" unless $mod =~ /\AAcme::CPANModules::/;
-    (my $mod_pm = "$mod.pm") =~ s!::!/!g;
-    require $mod_pm;
+    my $list;
+    my $mod;
 
-    my $list = ${"$mod\::LIST"};
+    if ($args{_list}) {
+        $list = $args{_list};
+    } else {
+        $mod = $args{cpanmodule} or return [400, "Please specify cpanmodule"];
+        $mod = "Acme::CPANModules::$mod" unless $mod =~ /\AAcme::CPANModules::/;
+        (my $mod_pm = "$mod.pm") =~ s!::!/!g;
+        require $mod_pm;
+
+        $list = ${"$mod\::LIST"};
+    }
 
     # collect all features mentioned
     my @features;
@@ -47,7 +54,8 @@ sub draw_feature_matrix {
         }
     }
 
-    return [412, "No features mentioned in $mod"] unless @features;
+    return [412, "No features mentioned in " . ($mod // "list")]
+        unless @features;
 
     # generate table and collect notes
     my @notes;
