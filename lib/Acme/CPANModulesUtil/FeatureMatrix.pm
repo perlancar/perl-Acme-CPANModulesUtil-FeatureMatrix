@@ -1,6 +1,8 @@
 package Acme::CPANModulesUtil::FeatureMatrix;
 
+# AUTHORITY
 # DATE
+# DIST
 # VERSION
 
 use 5.010001;
@@ -59,6 +61,7 @@ sub draw_feature_matrix {
 
     # generate table and collect notes
     my @notes;
+    my %note_nums; # text => num
     my $note_num = 0;
     my @rows;
 
@@ -98,16 +101,24 @@ sub draw_feature_matrix {
                 }
                 my $fv = defined($f->{value}) ? ($f->{value} ? "yes" : "no") : "N/A";
                 my $has_note;
+                my $this_note_num;
                 if ($f->{summary}) {
                     $has_note++;
-                    $note_num++;
-                    my $note = "=item $note_num. $f->{summary}\n\n";
+
+                    my $note_text = $f->{summary};
                     if ($f->{description}) {
-                        $note .= Markdown::To::POD::markdown_to_pod($f->{description}) . "\n\n";
+                        $note_text .= Markdown::To::POD::markdown_to_pod($f->{description}) . "\n\n";
                     }
-                    push @notes, $note;
+
+                    if ($this_note_num = $note_nums{$note_text}) {
+                        # reuse the same text from another note
+                    } else {
+                        $note_num++;
+                        push @notes, "=item $note_num. $note_text\n\n";
+                        $note_nums{$note_text} = $this_note_num = $note_num;
+                    }
                 }
-                push @row, $fv . ($has_note ? " *$note_num)" : "");
+                push @row, $fv . ($has_note ? " *$this_note_num)" : "");
             }
             push @rows, \@row;
         }
