@@ -28,6 +28,8 @@ $SPEC{draw_feature_matrix} = {
     },
 };
 sub draw_feature_matrix {
+    require Data::Sah::Resolve;
+    require Data::Sah::Util::Type;
     require Markdown::To::POD;
     require Text::Table::Any;
 
@@ -90,24 +92,30 @@ sub draw_feature_matrix {
         for my $e (@{ $list->{entries} }) {
             my @row = ($e->{module});
             for my $fname (@features) {
-                my $f;
-                if (!$e->{features} || !defined($f = $e->{features}{$fname})) {
-                    push @row, "N/A";
-                    next;
+                my $ftype = Data::Sah::Util::Type::get_type(
+                    Data::Sah::Resolve::resolve_schema(
+                        $list->{entry_features}{$fname}{schema} // 'bool'
+                    ));
+
+                my $fvalue0;
+                my $fvalue;
+                if (!$e->{features} || !defined($e->{features}{$fname})) {
+                    $fvalue = "N/A";
+                } else {
+                    $fvalue0 = $e->{features}{$fname};
+                    $fvalue = ref $fvalue0 eq 'HASH' ? $fvalue0->{value} : $fvalue0;
+                    $fvalue = !defined($fvalue) ? "N/A" :
+                        $ftype eq 'bool' ? ($fvalue ? "yes" : "no") : $fvalue;
                 }
-                if (!ref $f) {
-                    push @row, $f ? "yes" : "no";
-                    next;
-                }
-                my $fv = defined($f->{value}) ? ($f->{value} ? "yes" : "no") : "N/A";
+
                 my $has_note;
                 my $this_note_num;
-                if ($f->{summary}) {
+                if (ref $fvalue0 eq 'HASH' && $fvalue0->{summary}) {
                     $has_note++;
 
-                    my $note_text = $f->{summary};
-                    if ($f->{description}) {
-                        $note_text .= Markdown::To::POD::markdown_to_pod($f->{description}) . "\n\n";
+                    my $note_text = $fvalue0->{summary};
+                    if ($fvalue0->{description}) {
+                        $note_text .= Markdown::To::POD::markdown_to_pod($fvalue0->{description}) . "\n\n";
                     }
 
                     if ($this_note_num = $note_nums{$note_text}) {
@@ -118,7 +126,7 @@ sub draw_feature_matrix {
                         $note_nums{$note_text} = $this_note_num = $note_num;
                     }
                 }
-                push @row, $fv . ($has_note ? " *$this_note_num)" : "");
+                push @row, $fvalue . ($has_note ? " *$this_note_num)" : "");
             }
             push @rows, \@row;
         }
