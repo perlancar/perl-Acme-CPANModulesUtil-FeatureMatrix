@@ -1,3 +1,8 @@
+0.003   2021-02-20  Released-By: PERLANCAR; Urgency: medium
+
+	- [ux] Reuse note with the same text.
+
+
 0.002   2019-01-12  Released-By: PERLANCAR
 
 	- Accept _list argument.
