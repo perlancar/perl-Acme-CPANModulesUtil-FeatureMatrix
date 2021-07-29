@@ -92,10 +92,10 @@ sub draw_feature_matrix {
         for my $e (@{ $list->{entries} }) {
             my @row = ($e->{module});
             for my $fname (@features) {
-                my $ftype = Data::Sah::Util::Type::get_type(
-                    Data::Sah::Resolve::resolve_schema(
-                        $list->{entry_features}{$fname}{schema} // 'bool'
-                    ));
+                my $rres = Data::Sah::Resolve::resolve_schema(
+                    $list->{entry_features}{$fname}{schema} // 'bool'
+                );
+                my $ftype = $rres->{type};
 
                 my $fvalue0;
                 my $fvalue;
